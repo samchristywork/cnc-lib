@@ -229,3 +229,30 @@ class GCodeGenerator:
                 'end': dict(self.current_position),
                 'center_offset': {'i': i or 0, 'j': j or 0, 'k': k or 0}
             })
+
+    def spindle_on_cw(self, rpm=None):
+        """
+        Start spindle clockwise (M3).
+
+        Args:
+            rpm: Spindle speed in RPM (optional)
+        """
+        if rpm is not None:
+            self.commands.append(f"M3 S{rpm} ; Start spindle clockwise at {rpm} RPM")
+        else:
+            self.commands.append("M3 ; Start spindle clockwise")
+
+    def spindle_on_ccw(self, rpm=None):
+        """
+        Start spindle counter-clockwise (M4).
+
+        Args:
+            rpm: Spindle speed in RPM (optional)
+        """
+        if rpm is not None:
+            self.commands.append(f"M4 S{rpm} ; Start spindle counter-clockwise at {rpm} RPM")
+        else:
+            self.commands.append("M4 ; Start spindle counter-clockwise")
+
+    def spindle_off(self):
+        self.commands.append("M5 ; Stop spindle")
