@@ -256,3 +256,30 @@ class GCodeGenerator:
 
     def spindle_off(self):
         self.commands.append("M5 ; Stop spindle")
+
+    def dwell(self, seconds):
+        """
+        Dwell/pause (G4).
+
+        Args:
+            seconds: Duration in seconds
+        """
+        self.commands.append(f"G4 P{seconds:.2f} ; Dwell for {seconds:.2f} seconds")
+
+    def program_end(self):
+        self.commands.append("M30 ; End program")
+
+    def get_gcode(self):
+        """
+        Get the generated G-code as a string.
+
+        Returns:
+            String containing all G-code commands
+        """
+        return "\n".join(self.commands)
+
+    def clear(self):
+        """Clear all generated commands."""
+        self.commands = []
+        self.current_position = {'x': 0, 'y': 0, 'z': 0}
+        self.path_history = []
