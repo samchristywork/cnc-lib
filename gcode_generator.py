@@ -111,3 +111,121 @@ class GCodeGenerator:
                 'start': start_pos,
                 'end': dict(self.current_position)
             })
+
+    def arc_cw(self, x=None, y=None, z=None, i=None, j=None, k=None, feed_rate=None):
+        """
+        Clockwise arc move (G2).
+
+        Args:
+            x: X coordinate of arc endpoint (optional)
+            y: Y coordinate of arc endpoint (optional)
+            z: Z coordinate of arc endpoint (optional)
+            i: X offset from current position to arc center (optional)
+            j: Y offset from current position to arc center (optional)
+            k: Z offset from current position to arc center (optional)
+            feed_rate: Feed rate in units per minute (optional)
+        """
+        coords = []
+        comment_parts = []
+        start_pos = dict(self.current_position)
+
+        if x is not None:
+            coords.append(f"X{x:.4f}")
+            comment_parts.append(f"X={x:.4f}")
+            self.current_position['x'] = x
+
+        if y is not None:
+            coords.append(f"Y{y:.4f}")
+            comment_parts.append(f"Y={y:.4f}")
+            self.current_position['y'] = y
+
+        if z is not None:
+            coords.append(f"Z{z:.4f}")
+            comment_parts.append(f"Z={z:.4f}")
+            self.current_position['z'] = z
+
+        if i is not None:
+            coords.append(f"I{i:.4f}")
+            comment_parts.append(f"I={i:.4f}")
+
+        if j is not None:
+            coords.append(f"J{j:.4f}")
+            comment_parts.append(f"J={j:.4f}")
+
+        if k is not None:
+            coords.append(f"K{k:.4f}")
+            comment_parts.append(f"K={k:.4f}")
+
+        if feed_rate is not None:
+            coords.append(f"F{feed_rate:.2f}")
+            comment_parts.append(f"feed={feed_rate:.2f}")
+
+        if coords:
+            coord_str = " ".join(coords)
+            comment = f"Clockwise arc to {', '.join(comment_parts)}"
+            self.commands.append(f"G2 {coord_str} ; {comment}")
+            self.path_history.append({
+                'type': 'arc_cw',
+                'start': start_pos,
+                'end': dict(self.current_position),
+                'center_offset': {'i': i or 0, 'j': j or 0, 'k': k or 0}
+            })
+
+    def arc_ccw(self, x=None, y=None, z=None, i=None, j=None, k=None, feed_rate=None):
+        """
+        Counter-clockwise arc move (G3).
+
+        Args:
+            x: X coordinate of arc endpoint (optional)
+            y: Y coordinate of arc endpoint (optional)
+            z: Z coordinate of arc endpoint (optional)
+            i: X offset from current position to arc center (optional)
+            j: Y offset from current position to arc center (optional)
+            k: Z offset from current position to arc center (optional)
+            feed_rate: Feed rate in units per minute (optional)
+        """
+        coords = []
+        comment_parts = []
+        start_pos = dict(self.current_position)
+
+        if x is not None:
+            coords.append(f"X{x:.4f}")
+            comment_parts.append(f"X={x:.4f}")
+            self.current_position['x'] = x
+
+        if y is not None:
+            coords.append(f"Y{y:.4f}")
+            comment_parts.append(f"Y={y:.4f}")
+            self.current_position['y'] = y
+
+        if z is not None:
+            coords.append(f"Z{z:.4f}")
+            comment_parts.append(f"Z={z:.4f}")
+            self.current_position['z'] = z
+
+        if i is not None:
+            coords.append(f"I{i:.4f}")
+            comment_parts.append(f"I={i:.4f}")
+
+        if j is not None:
+            coords.append(f"J{j:.4f}")
+            comment_parts.append(f"J={j:.4f}")
+
+        if k is not None:
+            coords.append(f"K{k:.4f}")
+            comment_parts.append(f"K={k:.4f}")
+
+        if feed_rate is not None:
+            coords.append(f"F{feed_rate:.2f}")
+            comment_parts.append(f"feed={feed_rate:.2f}")
+
+        if coords:
+            coord_str = " ".join(coords)
+            comment = f"Counter-clockwise arc to {', '.join(comment_parts)}"
+            self.commands.append(f"G3 {coord_str} ; {comment}")
+            self.path_history.append({
+                'type': 'arc_ccw',
+                'start': start_pos,
+                'end': dict(self.current_position),
+                'center_offset': {'i': i or 0, 'j': j or 0, 'k': k or 0}
+            })
