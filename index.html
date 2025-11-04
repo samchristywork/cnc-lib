@@ -5,6 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-code Generator</title>
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #left-panel {
+            width: 50vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        canvas {
+            border: 1px solid #333;
+            background-color: white;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #right-panel {
+            width: 50vw;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #top-section {
+            margin-bottom: 20px;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        #controls label {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        #controls input {
+            padding: 3px;
+            font-size: 12px;
+            width: 60px;
+        }
+        #controls span {
+            font-size: 12px;
+        }
+        #bottom-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        textarea {
+            flex: 1;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
+            resize: none;
+        }
     </style>
 </head>
 <body>
