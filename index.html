@@ -342,6 +342,395 @@
             drawDrill();
         }
 
+        function resizeCanvas() {
+            const size = Math.min(window.innerWidth * 0.5 - 40, window.innerHeight - 40);
+            canvas.width = size;
+            canvas.height = size;
+
+            const offsetMm = 25;
+            const offsetPixels = (offsetMm / CANVAS_SIZE_MM) * canvas.width;
+            panX = offsetPixels;
+            panY = offsetPixels;
+
+            redraw();
+        }
+
+        const img = new Image();
+        img.onload = function() {
+            redraw();
+        };
+        img.src = 'Coin.png';
+
+        resizeCanvas();
+
+        window.addEventListener('resize', resizeCanvas);
+
+        let isDragging = false;
+
+        function updateDrillFromMouse(event) {
+            const {x, y} = screenToCanvas(event.clientX, event.clientY);
+
+            const mmX = (x / canvas.width) * CANVAS_SIZE_MM;
+            const mmY = (y / canvas.height) * CANVAS_SIZE_MM;
+
+            drill.x = Math.max(-25, Math.min(25, mmX));
+            drill.y = Math.max(-25, Math.min(25, mmY));
+
+            xInput.value = drill.x.toFixed(1);
+            yInput.value = drill.y.toFixed(1);
+
+            redraw();
+        }
+
+        canvas.addEventListener('click', (event) => {
+            updateDrillFromMouse(event);
+        });
+
+        canvas.addEventListener('mousedown', (event) => {
+            if (event.button === 0) {
+                isDragging = true;
+                updateDrillFromMouse(event);
+            } else if (event.button === 1 || event.button === 2) {
+                event.preventDefault();
+                isPanning = true;
+                lastPanX = event.clientX;
+                lastPanY = event.clientY;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                updateDrillFromMouse(event);
+            } else if (isPanning) {
+                const deltaX = event.clientX - lastPanX;
+                const deltaY = event.clientY - lastPanY;
+                panX += deltaX;
+                panY += deltaY;
+                lastPanX = event.clientX;
+                lastPanY = event.clientY;
+                redraw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (event) => {
+            if (event.button === 0) {
+                isDragging = false;
+            } else if (event.button === 1 || event.button === 2) {
+                isPanning = false;
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            isPanning = false;
+        });
+
+        canvas.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+
+        canvas.addEventListener('wheel', (event) => {
+            event.preventDefault();
+
+            const {x, y} = screenToCanvas(event.clientX, event.clientY);
+
+            const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+            const newZoom = Math.max(0.1, Math.min(10, zoom * zoomFactor));
+
+            const zoomRatio = newZoom / zoom;
+            panX = event.clientX - (event.clientX - panX) * zoomRatio;
+            panY = event.clientY - (event.clientY - panY) * zoomRatio;
+
+            zoom = newZoom;
+            redraw();
+        });
+
+        const xInput = document.getElementById('x-input');
+        const yInput = document.getElementById('y-input');
+        const zInput = document.getElementById('z-input');
+        const speedInput = document.getElementById('speed-input');
+        const rpmInput = document.getElementById('rpm-input');
+        const diameterInput = document.getElementById('diameter-input');
+
+        function updateDrillFromControls() {
+            drill.x = Math.max(-25, Math.min(25, parseFloat(xInput.value) || 0));
+            drill.y = Math.max(-25, Math.min(25, parseFloat(yInput.value) || 0));
+            drill.z = Math.max(-5, Math.min(5, parseFloat(zInput.value) || 0));
+            drill.speed = parseFloat(speedInput.value) || 0;
+            drill.rpm = parseFloat(rpmInput.value) || 0;
+            drill.diameter = parseFloat(diameterInput.value) || 0;
+
+            xInput.value = drill.x;
+            yInput.value = drill.y;
+            zInput.value = drill.z;
+
+            redraw();
+        }
+
+        xInput.addEventListener('input', updateDrillFromControls);
+        yInput.addEventListener('input', updateDrillFromControls);
+        zInput.addEventListener('input', updateDrillFromControls);
+        speedInput.addEventListener('input', updateDrillFromControls);
+        rpmInput.addEventListener('input', updateDrillFromControls);
+        diameterInput.addEventListener('input', updateDrillFromControls);
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            drill.x = 0;
+            drill.y = 0;
+            drill.z = 0;
+            drill.speed = 50;
+            drill.rpm = 10000;
+            drill.diameter = 2.8;
+
+            xInput.value = drill.x;
+            yInput.value = drill.y;
+            zInput.value = drill.z;
+            speedInput.value = drill.speed;
+            rpmInput.value = drill.rpm;
+            diameterInput.value = drill.diameter;
+
+            redraw();
+        });
+
+        document.getElementById('undo-btn').addEventListener('click', () => {
+            if (instructions.length > 0) {
+                instructions.pop();
+                updateGcodeOutput();
+                updateJsonOutput();
+                redraw();
+            }
+        });
+
+        document.getElementById('start-spindle-btn').addEventListener('click', () => {
+            drill.rpm = 10000;
+            rpmInput.value = drill.rpm;
+        });
+
+        document.getElementById('set-arc-center-btn').addEventListener('click', () => {
+            const arcCenterXInput = document.getElementById('arc-center-x-input');
+            const arcCenterYInput = document.getElementById('arc-center-y-input');
+            arcCenterXInput.value = drill.x;
+            arcCenterYInput.value = drill.y;
+        });
+
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            const textarea = document.getElementById('gcode-output');
+            textarea.select();
+            document.execCommand('copy');
+        });
+
+        document.getElementById('save-btn').addEventListener('click', () => {
+            updateJsonOutput();
+        });
+
+        document.getElementById('load-btn').addEventListener('click', () => {
+            try {
+                const textarea = document.getElementById('json-output');
+                const loadedInstructions = JSON.parse(textarea.value);
+
+                instructions.length = 0;
+                instructions.push(...loadedInstructions);
+
+                updateGcodeOutput();
+                updateJsonOutput();
+                redraw();
+            } catch (e) {
+                alert('Error loading instructions: ' + e.message);
+            }
+        });
+
+        function getLastPosition() {
+            if (instructions.length === 0) {
+                return { x: 0, y: 0, z: 0 };
+            }
+            const lastInstruction = instructions[instructions.length - 1];
+            return {
+                x: lastInstruction.toX,
+                y: lastInstruction.toY,
+                z: lastInstruction.toZ
+            };
+        }
+
+        function generateGcode() {
+            let gcode = '; G-code generated by G-code Generator\n';
+            gcode += 'G21 ; Set units to millimeters\n';
+            gcode += 'G90 ; Use absolute positioning\n';
+            gcode += 'G92 X0 Y0 Z0 ; Set current position as origin\n\n';
+
+            let currentRpm = 0;
+            let spindleOn = false;
+
+            for (const instruction of instructions) {
+                if (instruction.rpm > 0 && !spindleOn) {
+                    gcode += `M3 S${instruction.rpm.toFixed(0)} ; Start spindle\n`;
+                    spindleOn = true;
+                    currentRpm = instruction.rpm;
+                } else if (instruction.rpm > 0 && instruction.rpm !== currentRpm) {
+                    gcode += `S${instruction.rpm.toFixed(0)} ; Change spindle speed\n`;
+                    currentRpm = instruction.rpm;
+                } else if (instruction.rpm === 0 && spindleOn) {
+                    gcode += 'M5 ; Stop spindle\n';
+                    spindleOn = false;
+                    currentRpm = 0;
+                }
+
+                if (instruction.type === 'linear_move') {
+                    const isRapid = instruction.fromZ >= 0 && instruction.toZ >= 0;
+
+                    if (isRapid) {
+                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        gcode += ' ; Rapid move\n';
+                    } else {
+                        gcode += `G01 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        if (instruction.speed > 0) {
+                            gcode += ` F${instruction.speed.toFixed(0)}`;
+                        }
+                        gcode += ' ; Linear move\n';
+                    }
+                } else if (instruction.type === 'arc_cw') {
+                    const isRapid = instruction.fromZ >= 0 && instruction.toZ >= 0;
+
+                    if (isRapid) {
+                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        gcode += ' ; Rapid move (arc above surface)\n';
+                    } else {
+                        gcode += `G02 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)} I${instruction.i.toFixed(3)} J${instruction.j.toFixed(3)}`;
+                        if (instruction.speed > 0) {
+                            gcode += ` F${instruction.speed.toFixed(0)}`;
+                        }
+                        gcode += ' ; Arc clockwise\n';
+                    }
+                } else if (instruction.type === 'arc_ccw') {
+                    const isRapid = instruction.fromZ >= 0 && instruction.toZ >= 0;
+
+                    if (isRapid) {
+                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        gcode += ' ; Rapid move (arc above surface)\n';
+                    } else {
+                        gcode += `G03 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)} I${instruction.i.toFixed(3)} J${instruction.j.toFixed(3)}`;
+                        if (instruction.speed > 0) {
+                            gcode += ` F${instruction.speed.toFixed(0)}`;
+                        }
+                        gcode += ' ; Arc counter-clockwise\n';
+                    }
+                }
+            }
+
+            if (spindleOn) {
+                gcode += 'M5 ; Stop spindle\n';
+            }
+
+            gcode += '\nM30 ; Program end\n';
+            return gcode;
+        }
+
+        function updateGcodeOutput() {
+            const textarea = document.getElementById('gcode-output');
+            textarea.value = generateGcode();
+        }
+
+        function updateJsonOutput() {
+            const textarea = document.getElementById('json-output');
+            textarea.value = JSON.stringify(instructions, null, 2);
+        }
+
+        function addLinearMove() {
+            const lastPos = getLastPosition();
+
+            instructions.push({
+                type: 'linear_move',
+                fromX: lastPos.x,
+                fromY: lastPos.y,
+                fromZ: lastPos.z,
+                toX: drill.x,
+                toY: drill.y,
+                toZ: drill.z,
+                speed: drill.speed,
+                rpm: drill.rpm,
+                diameter: drill.diameter
+            });
+
+            updateGcodeOutput();
+
+            updateJsonOutput();
+
+            redraw();
+        }
+
+        document.getElementById('linear-move-btn').addEventListener('click', addLinearMove);
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+                addLinearMove();
+            }
+        });
+
+        document.getElementById('arc-cw-btn').addEventListener('click', () => {
+            const lastPos = getLastPosition();
+            const arcCenterXInput = document.getElementById('arc-center-x-input');
+            const arcCenterYInput = document.getElementById('arc-center-y-input');
+
+            const arcCenterX = parseFloat(arcCenterXInput.value) || 25;
+            const arcCenterY = parseFloat(arcCenterYInput.value) || 25;
+
+            const i = arcCenterX - lastPos.x;
+            const j = arcCenterY - lastPos.y;
+
+            instructions.push({
+                type: 'arc_cw',
+                fromX: lastPos.x,
+                fromY: lastPos.y,
+                fromZ: lastPos.z,
+                toX: drill.x,
+                toY: drill.y,
+                toZ: drill.z,
+                i: i,
+                j: j,
+                speed: drill.speed,
+                rpm: drill.rpm,
+                diameter: drill.diameter
+            });
+
+            updateGcodeOutput();
+
+            updateJsonOutput();
+
+            redraw();
+        });
+
+        document.getElementById('arc-ccw-btn').addEventListener('click', () => {
+            const lastPos = getLastPosition();
+            const arcCenterXInput = document.getElementById('arc-center-x-input');
+            const arcCenterYInput = document.getElementById('arc-center-y-input');
+
+            const arcCenterX = parseFloat(arcCenterXInput.value) || 25;
+            const arcCenterY = parseFloat(arcCenterYInput.value) || 25;
+
+            const i = arcCenterX - lastPos.x;
+            const j = arcCenterY - lastPos.y;
+
+            instructions.push({
+                type: 'arc_ccw',
+                fromX: lastPos.x,
+                fromY: lastPos.y,
+                fromZ: lastPos.z,
+                toX: drill.x,
+                toY: drill.y,
+                toZ: drill.z,
+                i: i,
+                j: j,
+                speed: drill.speed,
+                rpm: drill.rpm,
+                diameter: drill.diameter
+            });
+
+            updateGcodeOutput();
+
+            updateJsonOutput();
+
+            redraw();
+        });
     </script>
 </body>
 </html>
