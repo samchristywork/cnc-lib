@@ -140,5 +140,208 @@
             <textarea id="json-output"></textarea>
         </div>
     </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const CANVAS_SIZE_MM = 50;
+
+        const drill = {
+            x: 0,           // mm
+            y: 0,           // mm
+            z: 0,           // mm
+            speed: 50,      // mm/min
+            rpm: 10000,     // revolutions per minute
+            diameter: 2.8   // mm
+        };
+
+        const instructions = [];
+
+        let zoom = 1;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let lastPanX = 0;
+        let lastPanY = 0;
+
+        function mmToPixels(mm) {
+            return (mm / CANVAS_SIZE_MM) * canvas.width;
+        }
+
+        function applyTransform() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.translate(panX, panY);
+            ctx.scale(zoom, zoom);
+        }
+
+        function screenToCanvas(screenX, screenY) {
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = screenX - rect.left;
+            const canvasY = screenY - rect.top;
+
+            const x = (canvasX - panX) / zoom;
+            const y = (canvasY - panY) / zoom;
+
+            return { x, y };
+        }
+
+        function getDrillColor() {
+            let r = 127;
+            let g = 127;
+            let b = 127;
+
+            if (drill.z < 0) {
+                const factor = Math.min(Math.abs(drill.z) / 5, 1);
+                r = 127 + Math.round(128 * factor);
+            } else if (drill.z > 0) {
+                const factor = Math.min(drill.z / 5, 1);
+                b = 127 + Math.round(128 * factor);
+            }
+
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function drawDrill() {
+            const x = mmToPixels(drill.x);
+            const y = mmToPixels(drill.y);
+            const radius = mmToPixels(drill.diameter) / 2;
+
+            ctx.fillStyle = getDrillColor();
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawToolPath() {
+            if (instructions.length === 0) return;
+
+            const totalInstructions = instructions.length;
+
+            for (let i = 0; i < instructions.length; i++) {
+                const instruction = instructions[i];
+
+                const progress = i / Math.max(1, totalInstructions - 1); // 0 to 1
+                const red = Math.round(progress * 255);
+                const blue = Math.round((1 - progress) * 255);
+                const color = `rgb(${red}, 0, ${blue})`;
+
+                if (instruction.type === 'linear_move') {
+                    if (instruction.fromZ < 0 && instruction.toZ < 0) {
+                        const fromX = mmToPixels(instruction.fromX);
+                        const fromY = mmToPixels(instruction.fromY);
+                        const toX = mmToPixels(instruction.toX);
+                        const toY = mmToPixels(instruction.toY);
+                        const lineWidth = mmToPixels(instruction.diameter);
+
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = lineWidth;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+
+                        ctx.beginPath();
+                        ctx.moveTo(fromX, fromY);
+                        ctx.lineTo(toX, toY);
+                        ctx.stroke();
+                    }
+                } else if (instruction.type === 'arc_cw' || instruction.type === 'arc_ccw') {
+                    if (instruction.fromZ < 0 && instruction.toZ < 0) {
+                        const fromX = mmToPixels(instruction.fromX);
+                        const fromY = mmToPixels(instruction.fromY);
+                        const toX = mmToPixels(instruction.toX);
+                        const toY = mmToPixels(instruction.toY);
+
+                        const centerXmm = instruction.fromX + instruction.i;
+                        const centerYmm = instruction.fromY + instruction.j;
+                        const centerX = mmToPixels(centerXmm);
+                        const centerY = mmToPixels(centerYmm);
+
+                        const lineWidth = mmToPixels(instruction.diameter);
+
+                        const radiusMm = Math.sqrt(instruction.i * instruction.i + instruction.j * instruction.j);
+                        const radius = mmToPixels(radiusMm);
+
+                        const startAngle = Math.atan2(fromY - centerY, fromX - centerX);
+                        const endAngle = Math.atan2(toY - centerY, toX - centerX);
+
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = lineWidth;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+
+                        ctx.beginPath();
+                        const counterClockwise = (instruction.type === 'arc_cw');
+                        ctx.arc(centerX, centerY, radius, startAngle, endAngle, counterClockwise);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            for (let i = 0; i < instructions.length; i++) {
+                const instruction = instructions[i];
+
+                if (instruction.type === 'linear_move') {
+                    const fromX = mmToPixels(instruction.fromX);
+                    const fromY = mmToPixels(instruction.fromY);
+                    const toX = mmToPixels(instruction.toX);
+                    const toY = mmToPixels(instruction.toY);
+
+                    ctx.strokeStyle = 'green';
+                    ctx.lineWidth = 1;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    ctx.beginPath();
+                    ctx.moveTo(fromX, fromY);
+                    ctx.lineTo(toX, toY);
+                    ctx.stroke();
+                } else if (instruction.type === 'arc_cw' || instruction.type === 'arc_ccw') {
+                    const fromX = mmToPixels(instruction.fromX);
+                    const fromY = mmToPixels(instruction.fromY);
+                    const toX = mmToPixels(instruction.toX);
+                    const toY = mmToPixels(instruction.toY);
+
+                    const centerXmm = instruction.fromX + instruction.i;
+                    const centerYmm = instruction.fromY + instruction.j;
+                    const centerX = mmToPixels(centerXmm);
+                    const centerY = mmToPixels(centerYmm);
+
+                    const radiusMm = Math.sqrt(instruction.i * instruction.i + instruction.j * instruction.j);
+                    const radius = mmToPixels(radiusMm);
+
+                    const startAngle = Math.atan2(fromY - centerY, fromX - centerX);
+                    const endAngle = Math.atan2(toY - centerY, toX - centerX);
+
+                    ctx.strokeStyle = 'green';
+                    ctx.lineWidth = 1;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    ctx.beginPath();
+                    const counterClockwise = (instruction.type === 'arc_cw');
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle, counterClockwise);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function redraw() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            applyTransform();
+
+            if (img.complete) {
+                const offset = -CANVAS_SIZE_MM / 2;
+                const offsetPixels = mmToPixels(offset);
+                ctx.drawImage(img, offsetPixels, offsetPixels, canvas.width, canvas.height);
+            }
+
+            drawToolPath();
+
+            drawDrill();
+        }
+
+    </script>
 </body>
 </html>
