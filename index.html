@@ -8,6 +8,60 @@
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+    <div id="left-panel">
+        <canvas id="canvas"></canvas>
+    </div>
+    <div id="right-panel">
+        <div id="top-section">
+            <button id="reset-btn">Reset</button>
+            <button id="undo-btn">Undo</button>
+            <button id="start-spindle-btn">Start Spindle</button>
+            <button id="linear-move-btn">Linear Move</button>
+            <button id="arc-cw-btn">Arc CW</button>
+            <button id="arc-ccw-btn">Arc CCW</button>
+        </div>
+        <div id="controls">
+            <div class="control-row">
+                <label>Position:</label>
+                <input type="number" id="x-input" step="0.1" value="0" min="-25" max="25" placeholder="X">
+                <input type="number" id="y-input" step="0.1" value="0" min="-25" max="25" placeholder="Y">
+                <input type="number" id="z-input" step="0.1" value="0" min="-5" max="5" placeholder="Z">
+                <span>mm</span>
+            </div>
+
+            <div class="control-row">
+                <label>Speed:</label>
+                <input type="number" id="speed-input" step="10" value="50">
+                <span>mm/min</span>
+            </div>
+
+            <div class="control-row">
+                <label>RPM:</label>
+                <input type="number" id="rpm-input" step="100" value="10000">
+                <span>rpm</span>
+            </div>
+
+            <div class="control-row">
+                <label>Diameter:</label>
+                <input type="number" id="diameter-input" step="0.1" value="2.8">
+                <span>mm</span>
+            </div>
+
+            <div class="control-row">
+                <label>Arc Center:</label>
+                <input type="number" id="arc-center-x-input" step="0.1" value="0" placeholder="X">
+                <input type="number" id="arc-center-y-input" step="0.1" value="0" placeholder="Y">
+                <span>mm</span>
+                <button id="set-arc-center-btn">Set Arc Center</button>
+            </div>
+        </div>
+        <div id="bottom-section">
+            <button id="copy-btn">Copy</button>
+            <textarea id="gcode-output"></textarea>
+            <button id="save-btn">Save</button>
+            <button id="load-btn">Load</button>
+            <textarea id="json-output"></textarea>
+        </div>
+    </div>
 </body>
 </html>
