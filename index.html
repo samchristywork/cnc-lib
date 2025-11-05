@@ -580,10 +580,10 @@
                     const isRapid = instruction.fromZ >= 0 && instruction.toZ >= 0;
 
                     if (isRapid) {
-                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${(-instruction.toY).toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
                         gcode += ' ; Rapid move\n';
                     } else {
-                        gcode += `G01 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        gcode += `G01 X${instruction.toX.toFixed(3)} Y${(-instruction.toY).toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
                         if (instruction.speed > 0) {
                             gcode += ` F${instruction.speed.toFixed(0)}`;
                         }
@@ -593,10 +593,10 @@
                     const isRapid = instruction.fromZ >= 0 && instruction.toZ >= 0;
 
                     if (isRapid) {
-                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${(-instruction.toY).toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
                         gcode += ' ; Rapid move (arc above surface)\n';
                     } else {
-                        gcode += `G02 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)} I${instruction.i.toFixed(3)} J${instruction.j.toFixed(3)}`;
+                        gcode += `G02 X${instruction.toX.toFixed(3)} Y${(-instruction.toY).toFixed(3)} Z${instruction.toZ.toFixed(3)} I${instruction.i.toFixed(3)} J${(-instruction.j).toFixed(3)}`;
                         if (instruction.speed > 0) {
                             gcode += ` F${instruction.speed.toFixed(0)}`;
                         }
@@ -606,10 +606,10 @@
                     const isRapid = instruction.fromZ >= 0 && instruction.toZ >= 0;
 
                     if (isRapid) {
-                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
+                        gcode += `G00 X${instruction.toX.toFixed(3)} Y${(-instruction.toY).toFixed(3)} Z${instruction.toZ.toFixed(3)}`;
                         gcode += ' ; Rapid move (arc above surface)\n';
                     } else {
-                        gcode += `G03 X${instruction.toX.toFixed(3)} Y${instruction.toY.toFixed(3)} Z${instruction.toZ.toFixed(3)} I${instruction.i.toFixed(3)} J${instruction.j.toFixed(3)}`;
+                        gcode += `G03 X${instruction.toX.toFixed(3)} Y${(-instruction.toY).toFixed(3)} Z${instruction.toZ.toFixed(3)} I${instruction.i.toFixed(3)} J${(-instruction.j).toFixed(3)}`;
                         if (instruction.speed > 0) {
                             gcode += ` F${instruction.speed.toFixed(0)}`;
                         }
