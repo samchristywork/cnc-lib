@@ -120,7 +120,7 @@
 
             <div class="control-row">
                 <label>Diameter:</label>
-                <input type="number" id="diameter-input" step="0.1" value="2.8">
+                <input type="number" id="diameter-input" step="0.1" value="0.5">
                 <span>mm</span>
             </div>
 
@@ -135,6 +135,8 @@
         <div id="bottom-section">
             <button id="copy-btn">Copy</button>
             <textarea id="gcode-output"></textarea>
+            <button id="paste-coords-btn">Paste Coordinates</button>
+            <textarea id="coords-input" placeholder="Paste coordinates here, e.g.:&#10;0, 0, 0&#10;5, 5, -1&#10;10, 0, -1"></textarea>
             <button id="save-btn">Save</button>
             <button id="load-btn">Load</button>
             <textarea id="json-output"></textarea>
@@ -153,7 +155,7 @@
             z: 0,           // mm
             speed: 50,      // mm/min
             rpm: 10000,     // revolutions per minute
-            diameter: 2.8   // mm
+            diameter: 0.5   // mm
         };
 
         const instructions = [];
@@ -480,7 +482,7 @@
             drill.z = 0;
             drill.speed = 50;
             drill.rpm = 10000;
-            drill.diameter = 2.8;
+            drill.diameter = 0.5;
 
             xInput.value = drill.x;
             yInput.value = drill.y;
@@ -730,6 +732,71 @@
             updateJsonOutput();
 
             redraw();
+        });
+
+        document.getElementById('paste-coords-btn').addEventListener('click', () => {
+            const coordsInput = document.getElementById('coords-input');
+            const text = coordsInput.value.trim();
+
+            if (!text) {
+                alert('Please paste coordinates first');
+                return;
+            }
+
+            const lines = text.split('\n');
+            let addedCount = 0;
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) continue;
+
+                // Parse line - support formats like "x, y, z" or "x y z"
+                const parts = trimmedLine.split(/[,\s]+/).map(p => parseFloat(p.trim()));
+
+                if (parts.length < 2 || parts.length > 3) {
+                    alert(`Invalid coordinate format on line: "${line}"\nExpected 2 or 3 numbers (X, Y, Z)`);
+                    return;
+                }
+
+                if (parts.some(isNaN)) {
+                    alert(`Invalid numbers on line: "${line}"`);
+                    return;
+                }
+
+                const x = parts[0];
+                const y = parts[1];
+                const z = parts.length === 3 ? parts[2] : drill.z;
+
+                const lastPos = getLastPosition();
+
+                instructions.push({
+                    type: 'linear_move',
+                    fromX: lastPos.x,
+                    fromY: lastPos.y,
+                    fromZ: lastPos.z,
+                    toX: x,
+                    toY: y,
+                    toZ: z,
+                    speed: drill.speed,
+                    rpm: drill.rpm,
+                    diameter: drill.diameter
+                });
+
+                drill.x = x;
+                drill.y = y;
+                drill.z = z;
+
+                addedCount++;
+            }
+
+            if (addedCount > 0) {
+                updateControls();
+                updateGcodeOutput();
+                updateJsonOutput();
+                redraw();
+                coordsInput.value = '';
+                alert(`Added ${addedCount} linear move(s)`);
+            }
         });
     </script>
 </body>
