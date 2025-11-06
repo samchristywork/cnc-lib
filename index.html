@@ -774,6 +774,18 @@
             if (event.code === 'Space' && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
                 event.preventDefault();
                 addLinearMove();
+            } else if (event.key === 'z' && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+                drill.z = Math.max(-5, drill.z - 1);
+                zInput.value = drill.z;
+                redraw();
+                addLinearMove();
+            } else if (event.key === 'a' && event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+                drill.z = Math.min(5, drill.z + 1);
+                zInput.value = drill.z;
+                redraw();
+                addLinearMove();
             }
         });
 
