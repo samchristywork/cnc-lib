@@ -36,6 +36,9 @@
         #top-section {
             margin-bottom: 20px;
         }
+        #image-upload {
+            display: none;
+        }
         #controls {
             display: flex;
             flex-direction: column;
@@ -90,6 +93,8 @@
     </div>
     <div id="right-panel">
         <div id="top-section">
+            <input type="file" id="image-upload" accept="image/*">
+            <button id="upload-image-btn">Upload Image</button>
             <button id="reset-btn">Reset</button>
             <button id="undo-btn">Undo</button>
             <button id="start-spindle-btn">Start Spindle</button>
@@ -156,6 +161,15 @@
             speed: 50,      // mm/min
             rpm: 10000,     // revolutions per minute
             diameter: 0.5   // mm
+        };
+
+        const imageTransform = {
+            scale: 1,
+            aspectRatioScaleX: 1,
+            aspectRatioScaleY: 1,
+            offsetX: 0,     // mm
+            offsetY: 0,     // mm
+            rotation: 0     // degrees
         };
 
         const instructions = [];
@@ -333,10 +347,29 @@
 
             applyTransform();
 
-            if (img.complete) {
+            if (img.complete && img.src) {
+                ctx.save();
+
+                const offsetXPixels = mmToPixels(imageTransform.offsetX);
+                const offsetYPixels = mmToPixels(imageTransform.offsetY);
+                ctx.translate(offsetXPixels, offsetYPixels);
+
+                ctx.rotate(imageTransform.rotation * Math.PI / 180);
+
                 const offset = -CANVAS_SIZE_MM / 2;
                 const offsetPixels = mmToPixels(offset);
-                ctx.drawImage(img, offsetPixels, offsetPixels, canvas.width, canvas.height);
+                const size = canvas.width;
+
+                const finalScaleX = imageTransform.scale * imageTransform.aspectRatioScaleX;
+                const finalScaleY = imageTransform.scale * imageTransform.aspectRatioScaleY;
+                const scaledWidth = size * finalScaleX;
+                const scaledHeight = size * finalScaleY;
+                const scaledOffsetX = offsetPixels * finalScaleX;
+                const scaledOffsetY = offsetPixels * finalScaleY;
+
+                ctx.drawImage(img, scaledOffsetX, scaledOffsetY, scaledWidth, scaledHeight);
+
+                ctx.restore();
             }
 
             drawToolPath();
@@ -359,9 +392,50 @@
 
         const img = new Image();
         img.onload = function() {
+            if (img.width && img.height) {
+                const aspectRatio = img.width / img.height;
+                if (aspectRatio > 1) {
+                    imageTransform.aspectRatioScaleX = 1;
+                    imageTransform.aspectRatioScaleY = 1 / aspectRatio;
+                } else {
+                    imageTransform.aspectRatioScaleX = aspectRatio;
+                    imageTransform.aspectRatioScaleY = 1;
+                }
+            }
             redraw();
         };
         img.src = 'Coin.png';
+
+        function loadImageFromFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.getElementById('upload-image-btn').addEventListener('click', () => {
+            document.getElementById('image-upload').click();
+        });
+
+        document.getElementById('image-upload').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            loadImageFromFile(file);
+        });
+
+        document.addEventListener('paste', (event) => {
+            const items = event.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    loadImageFromFile(file);
+                    event.preventDefault();
+                    break;
+                }
+            }
+        });
 
         resizeCanvas();
 
