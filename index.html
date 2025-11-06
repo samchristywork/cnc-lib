@@ -136,6 +136,24 @@
                 <span>mm</span>
                 <button id="set-arc-center-btn">Set Arc Center</button>
             </div>
+
+            <div class="control-row">
+                <label>Image Scale:</label>
+                <input type="number" id="image-scale-input" step="0.1" value="1" min="0.1" max="10">
+            </div>
+
+            <div class="control-row">
+                <label>Image Offset:</label>
+                <input type="number" id="image-offset-x-input" step="0.1" value="0">
+                <input type="number" id="image-offset-y-input" step="0.1" value="0">
+                <span>mm</span>
+            </div>
+
+            <div class="control-row">
+                <label>Image Rotation:</label>
+                <input type="number" id="image-rotation-input" step="1" value="0" min="-180" max="180">
+                <span>degrees</span>
+            </div>
         </div>
         <div id="bottom-section">
             <button id="copy-btn">Copy</button>
@@ -527,6 +545,10 @@
         const speedInput = document.getElementById('speed-input');
         const rpmInput = document.getElementById('rpm-input');
         const diameterInput = document.getElementById('diameter-input');
+        const imageScaleInput = document.getElementById('image-scale-input');
+        const imageOffsetXInput = document.getElementById('image-offset-x-input');
+        const imageOffsetYInput = document.getElementById('image-offset-y-input');
+        const imageRotationInput = document.getElementById('image-rotation-input');
 
         function updateDrillFromControls() {
             drill.x = Math.max(-25, Math.min(25, parseFloat(xInput.value) || 0));
@@ -549,6 +571,19 @@
         speedInput.addEventListener('input', updateDrillFromControls);
         rpmInput.addEventListener('input', updateDrillFromControls);
         diameterInput.addEventListener('input', updateDrillFromControls);
+
+        function updateImageTransform() {
+            imageTransform.scale = parseFloat(imageScaleInput.value) || 1;
+            imageTransform.offsetX = parseFloat(imageOffsetXInput.value) || 0;
+            imageTransform.offsetY = parseFloat(imageOffsetYInput.value) || 0;
+            imageTransform.rotation = parseFloat(imageRotationInput.value) || 0;
+            redraw();
+        }
+
+        imageScaleInput.addEventListener('input', updateImageTransform);
+        imageOffsetXInput.addEventListener('input', updateImageTransform);
+        imageOffsetYInput.addEventListener('input', updateImageTransform);
+        imageRotationInput.addEventListener('input', updateImageTransform);
 
         document.getElementById('reset-btn').addEventListener('click', () => {
             drill.x = 0;
