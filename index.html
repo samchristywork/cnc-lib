@@ -113,7 +113,7 @@
 
             <div class="control-row">
                 <label>Speed:</label>
-                <input type="number" id="speed-input" step="10" value="50">
+                <input type="number" id="speed-input" step="10" value="25">
                 <span>mm/min</span>
             </div>
 
@@ -176,7 +176,7 @@
             x: 0,           // mm
             y: 0,           // mm
             z: 0,           // mm
-            speed: 50,      // mm/min
+            speed: 25,      // mm/min
             rpm: 10000,     // revolutions per minute
             diameter: 0.5   // mm
         };
@@ -589,7 +589,7 @@
             drill.x = 0;
             drill.y = 0;
             drill.z = 0;
-            drill.speed = 50;
+            drill.speed = 25;
             drill.rpm = 10000;
             drill.diameter = 0.5;
 
@@ -782,8 +782,8 @@
             const arcCenterXInput = document.getElementById('arc-center-x-input');
             const arcCenterYInput = document.getElementById('arc-center-y-input');
 
-            const arcCenterX = parseFloat(arcCenterXInput.value) || 25;
-            const arcCenterY = parseFloat(arcCenterYInput.value) || 25;
+            const arcCenterX = parseFloat(arcCenterXInput.value) || 0;
+            const arcCenterY = parseFloat(arcCenterYInput.value) || 0;
 
             const i = arcCenterX - lastPos.x;
             const j = arcCenterY - lastPos.y;
@@ -815,8 +815,8 @@
             const arcCenterXInput = document.getElementById('arc-center-x-input');
             const arcCenterYInput = document.getElementById('arc-center-y-input');
 
-            const arcCenterX = parseFloat(arcCenterXInput.value) || 25;
-            const arcCenterY = parseFloat(arcCenterYInput.value) || 25;
+            const arcCenterX = parseFloat(arcCenterXInput.value) || 0;
+            const arcCenterY = parseFloat(arcCenterYInput.value) || 0;
 
             const i = arcCenterX - lastPos.x;
             const j = arcCenterY - lastPos.y;
