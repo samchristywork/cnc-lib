@@ -888,6 +888,11 @@
                 const y = parts[1];
                 const z = parts.length === 3 ? parts[2] : drill.z;
 
+                if (x < -25 || x > 25 || y < -25 || y > 25 || z < -5 || z > 5) {
+                    alert(`Coordinates out of bounds on line: "${line}"\nValid ranges: X/Y: -25 to 25mm, Z: -5 to 5mm`);
+                    return;
+                }
+
                 const lastPos = getLastPosition();
 
                 instructions.push({
