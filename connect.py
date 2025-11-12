@@ -86,3 +86,38 @@ def keyboard_mode(connection):
                 response = connection.readline().decode().strip()
                 if response and response != 'ok':
                     print(response)
+
+def main():
+    baudrates = [115200, 9600, 19200, 38400, 57600, 250000]
+
+    for baudrate in baudrates:
+        success, connection = connect_to_cnc(baudrate=baudrate)
+        if success:
+            print("Connected successfully")
+
+            while True:
+                try:
+                    cmd = input("> ")
+                    if cmd in ["exit", "quit"]:
+                        break
+                    elif cmd == "keyboard":
+                        keyboard_mode(connection)
+                    elif cmd.startswith("load "):
+                        filename = cmd[5:].strip()
+                        send_gcode_file(connection, filename)
+                    elif cmd:
+                        send_gcode_line(connection, cmd)
+                except KeyboardInterrupt:
+                    print()
+                    break
+                except Exception as e:
+                    print(f"Error: {e}")
+
+            connection.close()
+            return 0
+
+    print("Connection failed")
+    return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
